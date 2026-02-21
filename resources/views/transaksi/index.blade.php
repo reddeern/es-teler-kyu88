@@ -1,78 +1,52 @@
 @extends('layouts.app')
 
 @section('content')
-
-<style>
-.table-container{
-    background:#EFE6C8;
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.08);
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th, td{
-    padding:12px;
-    text-align:left;
-}
-
-th{
-    background:#DCCF9E;
-}
-
-tr:nth-child(even){
-    background:#f7f1d9;
-}
-
-.btn-detail{
-    background:#F08A8A;
-    padding:6px 12px;
-    border-radius:8px;
-    color:white;
-    text-decoration:none;
-}
-</style>
-
-<h2 style="font-size:26px;font-weight:bold;margin-bottom:30px;">
-    Data Transaksi
-</h2>
-
-<div class="table-container">
-
-<table>
-    <thead>
-        <tr>
-            <th>No</th>
-            <th>Nama Pelanggan</th>
-            <th>Total</th>
-            <th>Metode</th>
-            <th>Tanggal</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($transaksi as $item)
-        <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>{{ $item->nama_pelanggan }}</td>
-            <td>Rp {{ number_format($item->total_akhir) }}</td>
-            <td>{{ $item->metode_pembayaran }}</td>
-            <td>{{ $item->created_at->format('d-m-Y H:i') }}</td>
-            <td>
-                <a href="{{ route('transaksi.show',$item->id) }}"
-                   class="btn-detail">
-                    Detail
-                </a>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
-
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <h2 class="text-2xl font-black uppercase tracking-tighter">Data Transaksi</h2>
+    
+    <div class="flex flex-wrap gap-2">
+        <input type="text" id="searchInput" placeholder="Cari pelanggan..." 
+            class="p-3 rounded-xl border-none shadow-sm text-sm w-64 focus:ring-4 focus:ring-pink-300">
+        
+        <input type="date" id="startDate" class="p-3 rounded-xl border-none shadow-sm text-sm">
+        <input type="date" id="endDate" class="p-3 rounded-xl border-none shadow-sm text-sm">
+    </div>
 </div>
 
+<div class="bg-[#F2E3B6] p-6 rounded-[32px] shadow-xl border-4 border-black/5 overflow-x-auto">
+    <table class="w-full text-left">
+        <thead>
+            <tr class="bg-[#DCCF9E] text-gray-800 uppercase text-xs">
+                <th class="p-4">No</th>
+                <th class="p-4">Pelanggan</th>
+                <th class="p-4">Total Akhir</th>
+                <th class="p-4">Metode</th>
+                <th class="p-4">Tanggal</th>
+                <th class="p-4 text-center">Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody" class="font-bold text-gray-700">
+            @include('transaksi._table_rows') </tbody>
+    </table>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('tableBody');
+
+    searchInput.addEventListener('keyup', function() {
+        let keyword = searchInput.value;
+        
+        // Fetch data secara background
+        fetch(`{{ route('transaksi.index') }}?search=${keyword}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(data => {
+            tableBody.innerHTML = data; // Update isi tabel saja
+        });
+    });
+</script>
 @endsection

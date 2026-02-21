@@ -2,116 +2,110 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Produk;
 use App\Models\Transaksi;
+use App\Models\LaporanPenjualan;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class TransaksiController extends Controller
 {
+    // 1. Menampilkan Halaman Kasir (Grid Menu)
     public function kasir()
     {
-        // Ambil semua produk dulu biar pasti muncul
-        $produk = Produk::all();
-        return view('kasir.index', compact('produk'));
+        $produks = Produk::where('status', 'aktif')->get();
+        return view('kasir.index', compact('produks'));
     }
 
-    public function store(Request $request)
+    // 2. Perantara dari Grid Menu ke Form Input Pembayaran
+    public function checkoutSession(Request $request) 
     {
-        $request->validate([
-            'nama_pelanggan' => 'required',
-            'metode_pembayaran' => 'required'
-        ]);
-
-        $produkDipilih = $request->produk ?? [];
-        $subtotal = 0;
-        $detail = [];
-
-        foreach ($produkDipilih as $id => $qty) {
-
-            if ($qty > 0) {
-
-                $produk = Produk::find($id);
-
-                if (!$produk) {
-                    continue;
-                }
-
-                if ($produk->stok < $qty) {
-                    return back()->with('stok_habis',
-                        'Stok '.$produk->nama_produk.' tidak mencukupi. Sisa stok hanya '.$produk->stok.'.'
-                    );
-                }
-
-                $total = $produk->harga * $qty;
-
-                $detail[] = [
-                    'nama' => $produk->nama_produk,
-                    'harga' => $produk->harga,
-                    'qty' => $qty,
-                    'total' => $total
-                ];
-
-                $subtotal += $total;
-
-                $produk->stok -= $qty;
-                $produk->save();
-            }
+        $cart = json_decode($request->cart_data, true);
+        
+        if (!$cart) {
+            return redirect()->back()->with('error', 'Keranjang kosong!');
         }
 
-        if ($subtotal == 0) {
-            return back()->with('stok_habis', 'Silakan pilih minimal 1 produk.');
-        }
+        $total = collect($cart)->sum(fn($item) => $item['harga'] * $item['quantity']);
+        return view('kasir.input', compact('cart', 'total'));
+    }
 
-        $pajak = $subtotal * 0.1;
-        $totalAkhir = $subtotal + $pajak;
-
-        $transaksi = Transaksi::create([
+    // 3. Simpan Transaksi & Update Omset Otomatis
+    public function store(Request $request) {
+        $cart = json_decode($request->cart_data, true);
+        $subtotal = collect($cart)->sum(fn($i) => $i['harga'] * $i['quantity']);
+        $pajak = $subtotal * 0.05; // Pajak 5%
+        $total_akhir = $subtotal + $pajak;
+        
+        // Simpan ke tabel Transaksi
+        $trx = Transaksi::create([
             'nama_pelanggan' => $request->nama_pelanggan,
-            'detail_produk' => $detail,
+            'detail_produk' => $cart,
             'subtotal' => $subtotal,
             'pajak' => $pajak,
-            'total_akhir' => $totalAkhir,
-            'total_harga' => $totalAkhir,
+            'total_akhir' => $total_akhir,
+            'total_harga' => $total_akhir, 
             'metode_pembayaran' => $request->metode_pembayaran,
         ]);
 
-        return redirect()->route('kasir.struk', $transaksi->id);
+        // LOGIKA LAPORAN: Update tabel laporan_penjualan otomatis
+        $hariIni = Carbon::now()->toDateString();
+        $laporan = LaporanPenjualan::firstOrCreate(
+            ['tanggal' => $hariIni],
+            ['total_omset' => 0]
+        );
+        $laporan->increment('total_omset', $total_akhir);
+    
+        return redirect()->route('kasir.struk', $trx->id);
     }
 
+    // 4. Halaman Struk
     public function struk($id)
     {
         $transaksi = Transaksi::findOrFail($id);
         return view('kasir.struk', compact('transaksi'));
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $transaksi = Transaksi::latest()->get();
+        $query = Transaksi::query();
+    
+        if ($request->filled('search')) {
+            $query->where('nama_pelanggan', 'like', '%' . $request->search . '%');
+        }
+    
+        $transaksi = $query->latest()->get();
+    
+        // Jika request datang dari JavaScript (AJAX)
+        if ($request->ajax()) {
+            return view('transaksi._table_rows', compact('transaksi'))->render();
+        }
+    
+        // Jika buka halaman biasa
         return view('transaksi.index', compact('transaksi'));
     }
 
+    // 6. Detail Transaksi
     public function show($id)
     {
         $transaksi = Transaksi::findOrFail($id);
         return view('transaksi.detail', compact('transaksi'));
     }
 
+    // 7. Laporan Keuangan (Mengambil dari tabel laporan_penjualan)
     public function laporan(Request $request)
     {
-        $search = $request->search;
+        $query = LaporanPenjualan::query();
 
-        $laporan = \App\Models\Transaksi::selectRaw('
-                MONTH(created_at) as bulan_angka,
-                DATE_FORMAT(created_at, "%M") as bulan,
-                SUM(total_akhir) as total_omset
-            ')
-            ->when($search, function ($query) use ($search) {
-                $query->whereMonth('created_at', $search);
-            })
-            ->groupBy('bulan_angka', 'bulan')
-            ->orderBy('bulan_angka')
-            ->get();
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
+        }
 
-        return view('laporan.index', compact('laporan'));
+        $laporan_data = $query->orderBy('tanggal', 'desc')->get();
+        
+        $total_omset_periode = $laporan_data->sum('total_omset');
+        $jumlah_hari = $laporan_data->count();
+
+        return view('laporan.index', compact('laporan_data', 'total_omset_periode', 'jumlah_hari'));
     }
 }

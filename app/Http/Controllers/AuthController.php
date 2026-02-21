@@ -9,36 +9,58 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
+    // Menampilkan halaman login
     public function showLogin()
     {
+        // Jika sudah login, jangan kasih masuk halaman login lagi, lempar ke produk
+        if (Auth::check()) {
+            return redirect()->route('produk.index');
+        }
         return view('auth.login');
     }
 
+    // Proses Login
     public function login(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
             'username' => 'required',
             'password' => 'required'
+        ], [
+            'username.required' => 'Username wajib diisi!',
+            'password.required' => 'Password wajib diisi!',
         ]);
 
+        // 2. Cari User berdasarkan username
         $user = User::where('username', $request->username)->first();
 
+        // 3. Cek apakah user ada
         if (!$user) {
-            return back()->with('error', 'User tidak ditemukan');
+            return back()->with('error', 'Username tidak ditemukan!')->withInput();
         }
 
+        // 4. Cek apakah password cocok
         if (!Hash::check($request->password, $user->password)) {
-            return back()->with('error', 'Password salah');
+            return back()->with('error', 'Password salah!')->withInput();
         }
 
-        Auth::login($user);
+        // 5. Proses Login Manual
+        try {
+            Auth::login($user);
 
-        // 🔥 WAJIB supaya session aman & tidak mental balik login
-        $request->session()->regenerate();
+            // 6. Regenerate Session (PENTING: Menghindari serangan Session Fixation & Page Expired)
+            $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+            // 7. Redirect ke halaman produk sesuai keinginanmu
+            return redirect()->route('produk.index');
+
+        } catch (\Exception $e) {
+            // Jika ada error sistem saat login
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 
+    // Proses Logout
     public function logout(Request $request)
     {
         Auth::logout();

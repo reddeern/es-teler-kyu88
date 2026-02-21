@@ -1,72 +1,73 @@
 @extends('layouts.app')
 
 @section('content')
-
-<h2 style="font-size:24px;font-weight:bold;margin-bottom:30px;">
-    Tambah Menu
-</h2>
-
-<div style="background:#E8E1C3;padding:30px;border-radius:20px;max-width:800px;">
-
-<form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-
-    <div style="margin-bottom:20px;">
-        <label>Nama Produk</label>
-        <input type="text" name="nama_produk" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;">
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex items-center gap-4">
+        <a href="{{ route('produk.index') }}" class="bg-white/20 hover:bg-white/40 p-2 rounded-full transition text-gray-800">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="text-3xl font-bold text-gray-900">Tambah Menu Baru</h2>
     </div>
 
-    <div style="margin-bottom:20px;">
-        <label>Harga Produk</label>
-        <input type="number" name="harga_produk" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;">
+    <div class="bg-[#F2E3B6] p-8 rounded-[32px] shadow-2xl border border-white/30">
+        <form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
+
+            <div>
+                <label class="block text-gray-800 font-bold mb-2">Nama Menu</label>
+                <input type="text" name="nama_produk" 
+                    class="w-full p-4 rounded-2xl border-none shadow-inner focus:ring-4 focus:ring-pink-300 outline-none" 
+                    placeholder="Contoh: Es Teler Spesial" required>
+            </div>
+
+            <div>
+                <label class="block text-gray-800 font-bold mb-2">Harga (Rp)</label>
+                <input type="number" name="harga_produk" 
+                    class="w-full p-4 rounded-2xl border-none shadow-inner focus:ring-4 focus:ring-pink-300 outline-none" 
+                    placeholder="0" required>
+            </div>
+
+            <div>
+                <label class="block text-gray-800 font-bold mb-2">Foto Menu</label>
+                <div class="bg-white p-6 rounded-2xl border-2 border-dashed border-pink-400 text-center">
+                    <input type="file" name="gambar" id="gambar" class="hidden" accept="image/*" onchange="previewImage(this)">
+                    <label for="gambar" class="cursor-pointer block">
+                        <img id="preview" src="#" alt="Preview" class="hidden w-40 h-40 object-contain mx-auto mb-3">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-pink-500 mb-2"></i>
+                        <p class="text-gray-500 font-semibold">Klik untuk pilih foto</p>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-800 font-bold mb-2">Status Menu</label>
+                <select name="status" class="w-full p-4 rounded-2xl border-none shadow-inner outline-none focus:ring-4 focus:ring-pink-300">
+                    <option value="aktif">🟢 Aktif (Tampil di Kasir)</option>
+                    <option value="nonaktif">🔴 Non-Aktif</option>
+                </select>
+            </div>
+
+            <form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+                <button type="submit" class="nav-link w-full p-4 rounded-2xl text-xl font-black mt-4 shadow-lg">
+                    SIMPAN MENU
+                </button>
+            </form>
+        </form>
     </div>
-
-<div style="margin-bottom:20px;">
-    <label>Upload Gambar</label>
-    <input type="file" name="gambar" id="gambar" accept="image/*">
-
-    <div style="margin-top:10px;">
-        <img id="preview" 
-             style="max-width:150px; display:none; border-radius:10px;">
-    </div>
-</div>
-
-
-    <div style="margin-top:10px;">
-        <img id="preview" 
-             style="max-width:150px; display:none; border-radius:10px;">
-    </div>
-</div>
-
-
-    <div style="margin-bottom:20px;">
-        <label>Status</label><br>
-        <select name="status" style="padding:8px;border-radius:8px;">
-            <option value="aktif">Aktif</option>
-            <option value="nonaktif">Non Aktif</option>
-        </select>
-    </div>
-
-    <button type="submit" style="background:#F08A8A;color:white;padding:10px 20px;border:none;border-radius:10px;">
-        TAMBAH MENU
-    </button>
-
-</form>
-
 </div>
 
 <script>
-document.getElementById('gambar').addEventListener('change', function(event) {
-    const file = event.target.files[0];
+function previewImage(input) {
     const preview = document.getElementById('preview');
-
-    if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
     }
-});
+}
 </script>
-
-
-
 @endsection

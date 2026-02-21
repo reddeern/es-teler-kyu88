@@ -2,25 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Produk extends Model
 {
     use HasFactory;
 
-    protected $table = 'produk';
+    protected $table = 'produks'; 
 
     protected $fillable = [
         'nama_produk',
         'harga_produk',
         'gambar',
-        'status'
+        'status' 
     ];
-
-    // 🔥 TAMBAHAN BIAR SINKRON
-    public function getHargaAttribute()
-    {
-        return $this->harga_produk;
-    }
 }

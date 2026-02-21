@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Produk;
+use Illuminate\Http\Request;
 
 class ProdukController extends Controller
 {
-    public function index()
-    {
+    public function index() {
         $produks = Produk::all();
         return view('produk.index', compact('produks'));
     }
@@ -19,57 +18,54 @@ class ProdukController extends Controller
     }
 
     public function store(Request $request)
+{
+    $request->validate([
+        'nama_produk' => 'required',
+        'harga_produk' => 'required|numeric',
+        'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+    ]);
+
+    // Proses Simpan Gambar
+    $path = $request->file('gambar')->store('produk', 'public');
+
+    // Simpan ke Database
+    Produk::create([
+        'nama_produk' => $request->nama_produk,
+        'harga_produk' => $request->harga_produk,
+        'gambar' => $path,
+        'status' => 'aktif'
+    ]);
+
+    return redirect()->route('produk.index')->with('success', 'Menu berhasil ditambahkan!');
+}
+
+    public function edit($id)
     {
-        $request->validate([
-            'nama_produk' => 'required',
-            'harga_produk' => 'required|numeric',
-            'gambar' => 'required|image|mimes:jpg,jpeg,png',
-            'status' => 'required'
-        ]);
-
-        $gambarPath = $request->file('gambar')->store('produk', 'public');
-
-        Produk::create([
-            'nama_produk' => $request->nama_produk,
-            'harga_produk' => $request->harga_produk,
-            'gambar' => $gambarPath,
-            'status' => $request->status,
-        ]);
-
-        return redirect()->route('produk.index')
-                         ->with('success', 'Produk berhasil ditambahkan');
-    }
-
-    public function edit(Produk $produk)
-    {
+        $produk = Produk::findOrFail($id);
         return view('produk.edit', compact('produk'));
     }
 
-    public function update(Request $request, Produk $produk)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'nama_produk' => 'required',
-            'harga_produk' => 'required|numeric',
-            'status' => 'required'
-        ]);
+        $produk = Produk::findOrFail($id);
 
         if ($request->hasFile('gambar')) {
-            $gambarPath = $request->file('gambar')->store('produk', 'public');
-            $produk->gambar = $gambarPath;
+            $path = $request->file('gambar')->store('produk', 'public');
+            $produk->gambar = $path;
         }
 
         $produk->update([
             'nama_produk' => $request->nama_produk,
             'harga_produk' => $request->harga_produk,
-            'status' => $request->status,
+            'status' => $request->status
         ]);
 
-        return redirect()->route('produk.index')
-                         ->with('success', 'Produk berhasil diperbarui');
+        return redirect()->route('produk.index')->with('success', 'Produk berhasil diperbarui');
     }
 
-    public function destroy(Produk $produk)
+    public function destroy($id)
     {
+        $produk = Produk::findOrFail($id);
         $produk->delete();
 
         return redirect()->route('produk.index')
