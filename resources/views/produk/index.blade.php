@@ -1,8 +1,37 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    /* Animasi untuk Judul dan Tombol Atas */
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    /* Animasi untuk Grid Kartu Produk */
+    @keyframes cardAppear {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .animate-card {
+        opacity: 0;
+        animation: cardAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
 <div class="max-w-7xl mx-auto">
-    <div class="mb-6">
+    <div class="mb-6 fade-in-up">
         <h2 class="text-3xl font-bold text-gray-900 mb-4">Daftar Produk</h2>
         
         @if(session('success'))
@@ -17,10 +46,9 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        @foreach($produks as $produk)
-        <div class="product-card p-5 flex flex-col items-center shadow-lg border border-white/20 {{ $produk->status == 'nonaktif' ? 'opacity-75 grayscale-[0.5]' : '' }}">
-            
-            <div class="w-full flex justify-end mb-2">
+        @foreach($produks as $index => $produk)
+        <div class="animate-card product-card p-5 flex flex-col items-center shadow-lg border border-white/20 {{ $produk->status == 'nonaktif' ? 'opacity-75 grayscale-[0.5]' : '' }}"
+             style="animation-delay: {{ 0.1 * ($index + 1) }}s"> <div class="w-full flex justify-end mb-2">
                 @if($produk->status == 'aktif')
                     <span class="bg-green-100 text-green-600 text-[10px] font-black px-2 py-1 rounded-lg uppercase">Aktif</span>
                 @else

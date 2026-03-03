@@ -6,6 +6,27 @@
     <title>Login | Es Teler Kyuu 88</title>
 
     <style>
+        /* --- ANIMASI KEYFRAMES --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
         body {
             margin: 0;
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -14,6 +35,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden; /* Mencegah scroll saat animasi jalan */
         }
 
         .container {
@@ -25,6 +47,8 @@
             overflow: hidden;
             padding: 40px;
             box-shadow: 0 20px 0 rgba(0,0,0,0.1);
+            /* Penerapan Animasi */
+            animation: fadeInUp 0.8s ease-out;
         }
 
         /* LEFT SIDE */
@@ -34,6 +58,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            /* Penerapan Animasi */
+            animation: zoomIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s backwards;
         }
 
         .circle-bg {
@@ -65,11 +91,15 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            /* Penerapan Animasi */
+            animation: slideInRight 0.8s ease-out 0.5s backwards;
         }
 
         .logo {
             width: 180px;
             margin: 0 auto 20px auto;
+            /* Efek melayang halus setelah muncul */
+            animation: fadeInUp 0.6s ease-out 0.7s backwards, logoFloat 3s ease-in-out 1.3s infinite;
         }
 
         .right h2 {
@@ -155,6 +185,7 @@
             font-weight: bold;
             font-size: 13px;
             text-align: center;
+            animation: zoomIn 0.4s ease-out; /* Animasi kecil saat error muncul */
         }
 
         /* RESPONSIVE */
@@ -163,10 +194,12 @@
                 flex-direction: column;
                 padding: 30px;
                 border-radius: 30px;
+                height: auto;
             }
             .left { display: none; }
             .right { width: 100%; padding: 10px; }
             form { max-width: 100%; }
+            body { overflow: auto; }
         }
     </style>
 </head>
