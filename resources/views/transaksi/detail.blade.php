@@ -26,8 +26,8 @@
 
 @foreach($transaksi->detail_produk as $item)
 <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-    <span>{{ $item['nama'] }} x{{ $item['qty'] }}</span>
-    <span>Rp {{ number_format($item['total']) }}</span>
+    <span>{{ $item['nama'] }} x{{ $item['qty'] ?? 0 }}</span>
+    <span>Rp {{ number_format($transaksi->total_harga, 0, ',', '.') }}</span>
 </div>
 @endforeach
 

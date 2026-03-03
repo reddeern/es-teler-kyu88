@@ -57,7 +57,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             // Jika ada error sistem saat login
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
-        }
+        }   
     }
 
     // Proses Logout

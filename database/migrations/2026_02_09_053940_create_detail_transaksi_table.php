@@ -7,25 +7,22 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (!Schema::hasTable('detail_transaksi')) {
-            Schema::create('detail_transaksi', function (Blueprint $table) {
-                $table->id();
+        // Matikan pengecekan FK biar nggak rewel pas proses bikin
+        Schema::disableForeignKeyConstraints();
 
-                $table->unsignedBigInteger('transaksi_id');
-                $table->unsignedBigInteger('produk_id');
+        Schema::create('detail_transaksi', function (Blueprint $table) {
+            $table->id();
 
-                $table->integer('qty');
-                $table->integer('harga');
+            // Pake foreignId lebih pinter, dia otomatis nyari tipe data yang cocok
+            $table->foreignId('transaksi_id')->constrained('transaksi')->onDelete('cascade');
+            $table->foreignId('produk_id')->constrained('produk')->onDelete('cascade');
 
-                $table->foreign('transaksi_id')
-                      ->references('id')
-                      ->on('transaksi');
+            $table->integer('qty');
+            $table->decimal('harga', 15, 2); // DECIMAL lebih aman buat harga daripada integer
+            $table->timestamps();
+        });
 
-                $table->foreign('produk_id')
-                      ->references('id')
-                      ->on('produk');
-            });
-        }
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
